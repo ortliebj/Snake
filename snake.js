@@ -1,26 +1,33 @@
-const board = document.getElementById("canvas");
-const ctx = board.getContext("2d");
-board.width = 600;
-board.height = 600;
-board.style.border = "1px solid black";
-
-let playing = true;
-let dir = "RIGHT";
+let board, ctx, dir, snake, food, gameInterval;
 const CELL = 10;  // size of each cell in the board
 
-let snake = [{x:200, y:300}]; 
-let food = {};
+function init() {
+    board = document.createElement("canvas");
+    board.id = "canvas";
+    board.width = 600;
+    board.height = 600;
+    board.style.border = "1px solid black";
+    document.getElementById("game-container").appendChild(board);
+    ctx = board.getContext("2d");
 
-generateFood();
+    dir = "RIGHT";
+    food = {};
+    generateFood();
 
-// initialize snake 
-for (let i = 0; i < 5; i++) {
-    let newx = snake[i].x - CELL;
-    let newy = snake[i].y;
-    snake.push({x: newx, y: newy});
+    snake = [{x:200, y:300}]; 
+    for (let i = 0; i < 5; i++) {
+        let newx = snake[i].x - CELL;
+        let newy = snake[i].y;
+        snake.push({x: newx, y: newy});
+    }
+
+    // Remove the "enter" event listener so you can't start a new game before losing
+    document.removeEventListener("keydown", handleEnterKey);
+    document.addEventListener("keydown", handleArrowKeys);
 }
 
-document.addEventListener("keydown", event => {
+// Change direction on keypress. Prevent movement in opposite direction.
+function handleArrowKeys(event) {
     switch (event.key) {
         case "ArrowLeft":
             if (dir != "RIGHT") dir = "LEFT";
@@ -35,7 +42,15 @@ document.addEventListener("keydown", event => {
             if (dir != "UP") dir = "DOWN";
             break;
     }
-});
+}
+
+function handleEnterKey(event) {
+    if (event.key == "Enter") {
+        board.remove();
+        board = null;
+        newGame();
+    }
+}
 
 function drawCell(x, y, fill, stroke) {
     ctx.fillStyle = fill;
@@ -89,14 +104,26 @@ function didCollide() {
 }
 
 function gameOver() {
-    ctx.clearRect(0, 0, board.width, board.height);
-    ctx.fillText("Game Over", 200, 250);
+    clearBoard();
+
+    ctx.fillText("Game Over", 300, 300);
+    ctx.fillText("Press 'Enter' to start a new game", 270, 350);
+
     gameInterval = clearInterval(gameInterval);
+
+    document.removeEventListener("keydown", handleEnterKey);
+    document.addEventListener("keydown", handleEnterKey);
+}
+
+function newGame() {
+    init();
+    gameInterval = setInterval(main, 100);
 }
 
 function main() {
     clearBoard();
 
+    // Check for new direction
     let dx = 0;
     let dy = 0;
     if (dir === "LEFT") dx -= CELL;
@@ -111,13 +138,12 @@ function main() {
         snake.pop();
     }
 
-    // Draw snake and food
     drawSnake();
     drawCell(food.x, food.y, "black", "black");
 
-    if (didCollide()) {
+    if (didCollide()) 
         gameOver();
-    }
+    
 }
 
-let gameInterval = setInterval(main, 100);
+newGame();
