@@ -1,7 +1,14 @@
-let board, ctx, dir, snake, food, gameInterval;
+let board, ctx, dir, snake, food, score, gameInterval;
+let highScore = 0;
 const CELL = 10;  // size of each cell in the board
 
+scoreP = document.getElementById("score");
+highScoreP = document.getElementById("high-score");
+
 function init() {
+    score = 0;
+    scoreP.innerHTML = "Score: " + score;
+    highScoreP.innerHTML = "High Score: " + highScore;
     board = document.createElement("canvas");
     board.id = "canvas";
     board.width = 600;
@@ -90,8 +97,8 @@ function generateFood() {
 
 function didCollide() {
     // Check bounds of the board
-    if (snake[0].x >= board.width || snake[0].x <= 0 ||
-        snake[0].y >= board.height || snake[0].y <= 0) {
+    if (snake[0].x >= board.width || snake[0].x < 0 ||
+        snake[0].y >= board.height || snake[0].y < 0) {
         return true;
     }
     // Check collision with snake
@@ -111,7 +118,10 @@ function gameOver() {
 
     gameInterval = clearInterval(gameInterval);
 
-    document.removeEventListener("keydown", handleEnterKey);
+    if (score > highScore)
+        highScore = score;
+
+    document.removeEventListener("keydown", handleArrowKeys);
     document.addEventListener("keydown", handleEnterKey);
 }
 
@@ -133,6 +143,8 @@ function main() {
     moveSnake(dx, dy);
     
     if (didEat()) {  
+        ++score;
+        scoreP.innerHTML = "Score: " + score;
         generateFood();
     } else {
         snake.pop();
